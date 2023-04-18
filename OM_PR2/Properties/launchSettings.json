@@ -1,8 +1,8 @@
 {
   "profiles": {
-    "OM_PR2": {
+   "OM_PR2": {
       "commandName": "Project",
-      "workingDirectory": "C:\\Users\\User\\source\\repos\\OM_PR2\\OM_PR2"
-    }
+      "workingDirectory": "C:\\Users\\Dmitry\\source\\repos\\Wolfed7\\OM_PR2\\OM_PR2"
+   }
   }
 }

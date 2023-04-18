@@ -5,12 +5,13 @@ public class Fibonacci : IMinSearchMethod1D
    private double _min;
    public double Min => _min;
    public double Eps { get; init; }
-   public int FunctionCount { get; private set; }
+   public int FunctionComputings { get; private set; }
    public Fibonacci(double eps)
        => Eps = eps;
 
    public void Compute(IFunction function, Interval interval, PointND direction, PointND point)
    {
+      FunctionComputings = 0;
       int n = 1;
       double Fn_2;
 
@@ -26,7 +27,7 @@ public class Fibonacci : IMinSearchMethod1D
 
       // temp
       double previousLength = interval.Length;
-      FunctionCount += 2;
+      FunctionComputings += 2;
       // temp
 
       for (int k = 1; k < n; k++)
@@ -58,7 +59,7 @@ public class Fibonacci : IMinSearchMethod1D
             f2 = function.Compute(point + x2 * direction);
          }
 
-         FunctionCount += 1;
+         FunctionComputings += 1;
 
          //// temp
          //Console.Write(interval.LeftBoundary.ToString("e9").PadLeft(20));

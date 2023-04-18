@@ -15,7 +15,7 @@ public class Interval
 
    public Interval (double leftBoundary, double rightBoundary)
    {
-      if (leftBoundary <= rightBoundary)
+      if (leftBoundary < rightBoundary)
       {
          LeftBoundary = leftBoundary;
          RightBoundary = rightBoundary;

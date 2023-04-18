@@ -12,7 +12,7 @@ public class BFGSMethod : IMinSearchMethodND
    public bool Need1DSearch => true;
    public int MaxIters { get; init; }
    public double Eps { get; init; }
-   private double _intervalEps => 1e-7;
+   public double IntervalEps => 1e-9;
 
    public BFGSMethod(int maxIters, double eps, IMinSearchMethod1D minSearchMethod1D)
    {
@@ -40,7 +40,7 @@ public class BFGSMethod : IMinSearchMethodND
       List<Matrix> matrices = new();
 
       Matrix H = new(pointDimention);
-      Matrix H1 = new(pointDimention);
+      Matrix deltaH = new(pointDimention);
       PointND nextPoint;
       PointND direction = new(pointDimention); // Вектор направления.
       PointND nablaF = new(pointDimention);
@@ -62,7 +62,7 @@ public class BFGSMethod : IMinSearchMethodND
 
          denominatorAsNumber = 0;
 
-         if (iters % 2 == pointDimention && iters != 0)
+         if (iters % pointDimention == 0 && iters != 0)
          {
             H.Clear();
 
@@ -87,8 +87,12 @@ public class BFGSMethod : IMinSearchMethodND
 
          direction = -H * nablaF;
 
-         _minSearchMethod1D.Compute(function, IntervalSearch.Search(function, 0, _intervalEps, direction, startPoint), direction, startPoint);
+         var intrvl = IntervalSearch.Search(function, 0, IntervalEps, direction, startPoint);
+         _minSearchMethod1D.Compute(function, intrvl, direction, startPoint);
          lambda = _minSearchMethod1D.Min;
+
+         FunctionsCalcs += _minSearchMethod1D.FunctionComputings; // Поиск одномерный вычисляет функцию столько раз.
+
          nextPoint = (PointND)(startPoint + lambda * direction).Clone();
 
 
@@ -96,21 +100,22 @@ public class BFGSMethod : IMinSearchMethodND
          lambdas.Add(lambda);
 
          for (int i = 0; i < pointDimention; i++)
-            nablaF1[i] = Derivative(nextPoint, function, i, h);
-
-         y = nablaF1 - nablaF;
-         s = nextPoint - startPoint;
-
-         if (s.Equals(lambda * direction))
          {
-            H.Clear();
+            nablaF1[i] = Derivative(nextPoint, function, i, h);
+            FunctionsCalcs += 2; // Функция вычисляется для каждой компоненты дважды.
+         }   
 
-            for (int i = 0; i < H.Size; i++)
-               H[i, i] = 1;
+         y = nablaF1 - nablaF; // Изменение градиента на итерации. (delta gk)
+         s = nextPoint - startPoint; // Шаг алгоритма на итерации. (delta xk)
 
-            startPoint = (PointND)nextPoint.Clone();
-            continue;
-         }
+         //if (s.Equals(lambda * direction))
+         //{
+         //   H.Clear();
+         //   for (int i = 0; i < H.Size; i++)
+         //      H[i, i] = 1;
+         //   startPoint = (PointND)nextPoint.Clone();
+         //   continue;
+         //}
 
          denominatorAsVector = s - H * y; // Вектор в знаменателе соотношения для deltaH.
 
@@ -121,21 +126,19 @@ public class BFGSMethod : IMinSearchMethodND
 
          for (int i = 0; i < pointDimention; i++)
             for (int j = 0; j < pointDimention; j++)
-               H1[i, j] = numerator[i] * numerator[j];
+               deltaH[i, j] = numerator[i] * numerator[j];
 
-         if (Math.Abs(denominatorAsNumber) < Eps)
-         {
-            H.Clear();
+         //if (Math.Abs(denominatorAsNumber) < Eps)
+         //{
+         //   H.Clear();
+         //   for (int i = 0; i < H.Size; i++)
+         //      H[i, i] = 1;
+         //   startPoint = (PointND)nextPoint.Clone();
+         //   continue;
+         //}
 
-            for (int i = 0; i < H.Size; i++)
-               H[i, i] = 1;
-
-            startPoint = (PointND)nextPoint.Clone();
-            continue;
-         }
-
-         H1 /= denominatorAsNumber;
-         H += H1;
+         deltaH /= denominatorAsNumber;
+         H += deltaH;
          startPoint = (PointND)nextPoint.Clone();
       }
 
@@ -174,12 +177,13 @@ public class BFGSMethod : IMinSearchMethodND
       return Math.Sqrt(result);
    }
 
-   private static double Derivative(PointND point, IFunction function, int PointDimension, double h)
+   private static double Derivative(PointND point, IFunction function, int current, double h)
    {
       PointND arg = new(point.Dimention);
-      arg[PointDimension] = h;
+      arg[current] = h;
 
       return (function.Compute(point + arg) - function.Compute(point - arg)) / (2 * h);
+      //return (function.Compute(point + arg) - function.Compute(point)) / h;
    }
 
    private static void Output
@@ -195,58 +199,60 @@ public class BFGSMethod : IMinSearchMethodND
    List<Matrix> matrices
    )
    {
-      for (int i = 0; i <= iters; i++)
-      {
-         Console.Write("{0:f8}".PadRight(10), coords[i][0]);
-         Console.Write("{0:f8}".PadRight(10), coords[i][1]);
+      //for (int i = 0; i <= iters; i++)
+      //{
+      //   Console.Write("{0:f6}".PadRight(10), coords[i][0]);
+      //   Console.Write("{0:f6}".PadRight(10), coords[i][1]);
 
 
-         Console.Write("{0:f8}".PadRight(10), funcs[i]);
+      //   Console.Write("{0:f6}".PadRight(10), funcs[i]);
 
-         if (i == iters)
-         {
-            Console.Write("---------".PadRight(10));
-            Console.Write("---------".PadRight(10));
-            Console.Write("---------".PadRight(10));
-         }
-         else
-         {
-            Console.Write("{0:f8}".PadRight(10), dirs[i][0]);
-            Console.Write("{0:f8}".PadRight(10), dirs[i][1]);
-            Console.Write("{0:f8}".PadRight(10), lambdas[i]);
-         }
+      //   if (i == iters)
+      //   {
+      //      Console.Write("---------".PadRight(10));
+      //      Console.Write("---------".PadRight(10));
+      //      Console.Write("---------".PadRight(10));
+      //   }
+      //   else
+      //   {
+      //      Console.Write("{0:f6}".PadRight(10), dirs[i][0]);
+      //      Console.Write("{0:f6}".PadRight(10), dirs[i][1]);
+      //      Console.Write("{0:f6}".PadRight(10), lambdas[i]);
+      //   }
 
-         if (i == 0)
-         {
-            Console.Write("---------".PadRight(10));
-            Console.Write("---------".PadRight(10));
-            Console.Write("---------".PadRight(10));
-         }
-         else
-         {
-            Console.Write("{0:f8}".PadRight(10), Math.Abs(coords[i][0] - coords[i - 1][0]));
-            Console.Write("{0:f8}".PadRight(10), Math.Abs(coords[i][1] - coords[i - 1][1]));
-            Console.Write("{0:f8}".PadRight(10), Math.Abs(funcs[i] - funcs[i - 1]));
-         }
+      //   if (i == 0)
+      //   {
+      //      Console.Write("---------".PadRight(10));
+      //      Console.Write("---------".PadRight(10));
+      //      Console.Write("---------".PadRight(10));
+      //   }
+      //   else
+      //   {
+      //      Console.Write("{0:f6}".PadRight(10), Math.Abs(coords[i][0] - coords[i - 1][0]));
+      //      Console.Write("{0:f6}".PadRight(10), Math.Abs(coords[i][1] - coords[i - 1][1]));
+      //      Console.Write("{0:f6}".PadRight(10), Math.Abs(funcs[i] - funcs[i - 1]));
+      //   }
 
-         if (i == iters)
-         {
-            Console.Write("---------".PadRight(10));
-         }
-         else
-         {
-            Console.Write("{0:f8}".PadRight(15), corners[i]);
-         }
+      //   if (i == iters)
+      //   {
+      //      Console.Write("---------".PadRight(10));
+      //   }
+      //   else
+      //   {
+      //      Console.Write("{0:f6}".PadRight(15), corners[i]);
+      //   }
 
-         Console.Write("{0:f8}".PadRight(10), gradfs[i][0]);
-         Console.Write("{0:f8}".PadRight(10), gradfs[i][1]);
+      //   Console.Write("{0:f6}".PadRight(10), gradfs[i][0]);
+      //   Console.Write("{0:f6}".PadRight(10), gradfs[i][1]);
                                           
-         Console.Write("{0:f8}".PadRight(10), matrices[i][0, 0]);
-         Console.Write("{0:f8}".PadRight(10), matrices[i][0, 1]);
-         Console.Write("{0:f8}".PadRight(10), matrices[i][1, 0]);
-         Console.WriteLine("{0:f8}".PadRight(10), matrices[i][1, 1]);
+      //   Console.Write("{0:f6}".PadRight(10), matrices[i][0, 0]);
+      //   Console.Write("{0:f6}".PadRight(10), matrices[i][0, 1]);
+      //   Console.Write("{0:f6}".PadRight(10), matrices[i][1, 0]);
+      //   Console.WriteLine("{0:f6}".PadRight(10), matrices[i][1, 1]);
+      //}
 
-      }
-      Console.WriteLine();
+      Console.Write($"{iters}".PadRight(10));
+      Console.Write($"{FunctionsCalcs}".PadRight(10));
+      //Console.WriteLine();
    }
 }

@@ -67,6 +67,7 @@ public class SimplexMethod : IMinSearchMethodND
       for (iters = 0; iters < MaxIters; iters++)
       {
          _simplex = _simplex.OrderBy(function.Compute).ToArray();
+         FunctionsCalcs += SimplexSize;
          xc.Fill(0);
 
          // Центр тяжести = сумма всех векторов (не скалярка), кроме xh 
@@ -84,8 +85,10 @@ public class SimplexMethod : IMinSearchMethodND
             coords.Add((PointND)_simplex[0].Clone());
          }
          funcs.Add(function.Compute(xc));
+         FunctionsCalcs += 1;
 
          // Выйдем, если достигли заданной точности.
+         FunctionsCalcs += 2; // В идеале дважды вычисляем для проверки точности.
          if (IsAccuracyAchieved(_simplex, xc, function))
          {
             _min = _simplex[0]; //xc
@@ -99,6 +102,8 @@ public class SimplexMethod : IMinSearchMethodND
          double fl = function.Compute(_simplex[0]); // Худшее значение функции.
          double fg = function.Compute(_simplex[PointDimension - 1]);
          double fh = function.Compute(_simplex[PointDimension]);
+         FunctionsCalcs += 4;
+
 
          if (fl < fr && fr < fg)
          {
@@ -134,6 +139,7 @@ public class SimplexMethod : IMinSearchMethodND
             // Не меняем xr и наибольший элемент симплекса, делаем сжатие.
             xg = InsideContraction(_simplex, xc);
 
+            FunctionsCalcs += 1;
             if (function.Compute(xg) < fh)
                _simplex[PointDimension] = (PointND)xg.Clone();
             else
@@ -219,48 +225,51 @@ public class SimplexMethod : IMinSearchMethodND
       int FunctionsCalcs
       )
    {
-      for (int i = 0; i <= iters; i++)
-      {
-         Console.Write("{0:f8}".PadRight(15), coords[i][0]);
-         Console.Write("{0:f8}".PadRight(15), coords[i][1]);
+      //for (int i = 0; i <= iters; i++)
+      //{
+      //   Console.Write("{0:f8}".PadRight(15), coords[i][0]);
+      //   Console.Write("{0:f8}".PadRight(15), coords[i][1]);
 
 
-         Console.Write("{0:f8}".PadRight(15), funcs[i]);
+      //   Console.Write("{0:f8}".PadRight(15), funcs[i]);
 
-         if (i == iters)
-         {
-            Console.Write("----------".PadRight(15));
-            Console.Write("----------".PadRight(15));
-         }
-         else
-         {
-            Console.Write("{0:f8}".PadRight(15), dirs[i][0]);
-            Console.Write("{0:f8}".PadRight(15), dirs[i][1]);
-         }
+      //   if (i == iters)
+      //   {
+      //      Console.Write("----------".PadRight(15));
+      //      Console.Write("----------".PadRight(15));
+      //   }
+      //   else
+      //   {
+      //      Console.Write("{0:f8}".PadRight(15), dirs[i][0]);
+      //      Console.Write("{0:f8}".PadRight(15), dirs[i][1]);
+      //   }
 
-         if (i == 0)
-         {
-            Console.Write("----------".PadRight(15));
-            Console.Write("----------".PadRight(15));
-            Console.Write("----------".PadRight(15));
-         }
-         else
-         {
-            Console.Write("{0:f8}".PadRight(15), Math.Abs(coords[i][0] - coords[i - 1][0]));
-            Console.Write("{0:f8}".PadRight(15), Math.Abs(coords[i][1] - coords[i - 1][1]));
-            Console.Write("{0:f8}".PadRight(15), Math.Abs(funcs[i] - funcs[i - 1]));
-         }
+      //   if (i == 0)
+      //   {
+      //      Console.Write("----------".PadRight(15));
+      //      Console.Write("----------".PadRight(15));
+      //      Console.Write("----------".PadRight(15));
+      //   }
+      //   else
+      //   {
+      //      Console.Write("{0:f8}".PadRight(15), Math.Abs(coords[i][0] - coords[i - 1][0]));
+      //      Console.Write("{0:f8}".PadRight(15), Math.Abs(coords[i][1] - coords[i - 1][1]));
+      //      Console.Write("{0:f8}".PadRight(15), Math.Abs(funcs[i] - funcs[i - 1]));
+      //   }
 
-         if (i == iters)
-         {
-            Console.Write("----------".PadRight(15));
-         }
-         else
-         {
-            Console.WriteLine("{0:f8}".PadRight(15), corners[i]);
-         }
-      }
-      Console.WriteLine();
+      //   if (i == iters)
+      //   {
+      //      Console.Write("----------".PadRight(15));
+      //   }
+      //   else
+      //   {
+      //      Console.WriteLine("{0:f8}".PadRight(15), corners[i]);
+      //   }
+      //}
+
+      Console.Write($"{iters}".PadRight(10));
+      Console.Write($"{FunctionsCalcs}".PadRight(10));
+      //Console.WriteLine();
    }
 }                             
                               
